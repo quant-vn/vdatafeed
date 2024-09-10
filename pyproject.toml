@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "vdatafeed"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 authors = ["thync <thync@outlook.com>"]
 readme = "README.md"
