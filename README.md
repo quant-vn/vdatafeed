@@ -1,4 +1,4 @@
-# vdatafeed
+# vDatafeed
 vDatafeed: A Python wrapper for Viet Nam Datafeed API
 
 ## Installation
