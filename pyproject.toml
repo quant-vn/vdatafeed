@@ -1,12 +1,15 @@
 [tool.poetry]
 name = "vdatafeed"
-version = "0.1.1"
-description = ""
+version = "0.1.2"
+license = "MIT"
+description = "vDatafeed: A Python wrapper for Viet Nam Datafeed API"
+repository = "https://github.com/quant-vn/vdatafeed"
+homepage = "https://quant.vn"
 authors = ["thync <thync@outlook.com>"]
-readme = "README.md"
+readme = ["README.md", "LICENSE"]
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.9"
 requests = "^2.32.3"
 websockets = "^13.0.1"
 pydantic = "^2.9.1"
