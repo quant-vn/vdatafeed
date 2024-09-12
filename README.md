@@ -4,8 +4,8 @@ vDatafeed: A Python wrapper for Viet Nam Datafeed API
 
 [![PyPI](https://img.shields.io/pypi/v/vdatafeed)](https://pypi.org/project/vdatafeed/)
 [![Python Version](https://img.shields.io/pypi/pyversions/vdatafeed)](#)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/vdatafeed)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 ## Installation
 ```bash
