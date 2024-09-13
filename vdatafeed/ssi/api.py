@@ -205,8 +205,10 @@ class SSIDatafeedAPI(IDatafeedAPI):
         Returns:
             dict: The daily information.
         """
-        from_date = datetime.strptime(from_date, "%Y-%m-%d").strftime("%d/%m/%Y") if from_date else None
-        to_date = datetime.strptime(to_date, "%Y-%m-%d").strftime("%d/%m/%Y") if to_date else None
+        if from_date:
+            from_date = datetime.strptime(from_date, "%Y-%m-%d").strftime("%d/%m/%Y")
+        if to_date:
+            to_date = datetime.strptime(to_date, "%Y-%m-%d").strftime("%d/%m/%Y")
         self.__headers.update({"Authorization": self.get_token()})
         params: dict = {
             "fromDate": from_date,
@@ -263,8 +265,10 @@ class SSIDatafeedAPI(IDatafeedAPI):
         Returns:
             dict: The daily information.
         """
-        from_date = datetime.strptime(from_date, "%Y-%m-%d").strftime("%d/%m/%Y") if from_date else None
-        to_date = datetime.strptime(to_date, "%Y-%m-%d").strftime("%d/%m/%Y") if to_date else None
+        if from_date:
+            from_date = datetime.strptime(from_date, "%Y-%m-%d").strftime("%d/%m/%Y")
+        if to_date:
+            to_date = datetime.strptime(to_date, "%Y-%m-%d").strftime("%d/%m/%Y")
         self.__headers.update({"Authorization": self.get_token()})
         params: dict = {
             "IndexId": index,
@@ -300,8 +304,10 @@ class SSIDatafeedAPI(IDatafeedAPI):
         Returns:
             dict: The end-of-day OHLC data.
         """
-        from_date = datetime.strptime(from_date, "%Y-%m-%d").strftime("%d/%m/%Y") if from_date else None
-        to_date = datetime.strptime(to_date, "%Y-%m-%d").strftime("%d/%m/%Y") if to_date else None
+        if from_date:
+            from_date = datetime.strptime(from_date, "%Y-%m-%d").strftime("%d/%m/%Y")
+        if to_date:
+            to_date = datetime.strptime(to_date, "%Y-%m-%d").strftime("%d/%m/%Y")
         self.__headers.update({"Authorization": self.get_token()})
         params: dict = {
             "Symbol": instrument,
@@ -330,8 +336,10 @@ class SSIDatafeedAPI(IDatafeedAPI):
         Returns:
             dict: The intraday OHLC data.
         """
-        from_date = datetime.strptime(from_date, "%Y-%m-%d").strftime("%d/%m/%Y") if from_date else None
-        to_date = datetime.strptime(to_date, "%Y-%m-%d").strftime("%d/%m/%Y") if to_date else None
+        if from_date:
+            from_date = datetime.strptime(from_date, "%Y-%m-%d").strftime("%d/%m/%Y")
+        if to_date:
+            to_date = datetime.strptime(to_date, "%Y-%m-%d").strftime("%d/%m/%Y")
         self.__headers.update({"Authorization": self.get_token()})
         params: dict = {
             "Symbol": instrument,

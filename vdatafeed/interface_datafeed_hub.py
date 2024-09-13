@@ -30,12 +30,13 @@ class IDatafeedHUB(ABC):
         self.__token = value
 
     @abstractmethod
-    async def listen(self, args, on_message):
+    async def listen(self, args, on_trade_message, on_quote_message):
         """
-        Listens for incoming messages from the data feed.
+        Listens for incoming messages from the datafeed.
         Args:
             args: The arguments for the listen method.
-            on_message: The callback function to be executed when a message is received.
+            on_trade_message: The callback function to be executed when a trade message is received.
+            on_quote_message: The callback function to be executed when a quote message is received.
         Returns:
             NotImplemented
         """

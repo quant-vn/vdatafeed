@@ -90,22 +90,26 @@ class SSIDatafeedHUB(IDatafeedHUB):
                                 last_vol[msg.get("symbol")] = msg.get("LastVol")
                             else:
                                 if last_vol[msg.get("symbol")] == msg.get("LastVol"):
+                                    _l = range(1, 11)
+                                    _rev_l = list(reversed(_l))
                                     msg = {
-                                        "datetime":  " ".join([msg.get("TradingDate"), msg.get("Time")]),
+                                        "datetime": " ".join([
+                                            msg.get("TradingDate"), msg.get("Time")
+                                        ]),
                                         "symbol": msg.get("Symbol"),
                                         "ce": msg.get("Ceiling"),
                                         "fl": msg.get("Floor"),
                                         "re": msg.get("RefPrice"),
-                                        "bid_price": [msg.get(f"BidPrice{i}") for i in list(reversed(range(1, 11)))],
-                                        "bid_vol": [msg.get(f"BidVol{i}") for i in list(reversed(range(1, 11)))],
-                                        "ask_price": [msg.get(f"AskPrice{i}") for i in range(1, 11)],
-                                        "ask_vol": [msg.get(f"AskVol{i}") for i in range(1, 11)]
+                                        "bid_price": [msg.get(f"BidPrice{i}") for i in _rev_l],
+                                        "bid_vol": [msg.get(f"BidVol{i}") for i in _rev_l],
+                                        "ask_price": [msg.get(f"AskPrice{i}") for i in _l],
+                                        "ask_vol": [msg.get(f"AskVol{i}") for i in _l]
                                     }
                                     on_quote_message(msg)
                                     continue
                                 last_vol[msg.get("symbol")] = msg.get("LastVol")
                             msg = {
-                                "datetime":  " ".join([msg.get("TradingDate"), msg.get("Time")]),
+                                "datetime": " ".join([msg.get("TradingDate"), msg.get("Time")]),
                                 "symbol": msg.get("Symbol"),
                                 "ce": msg.get("Ceiling"),
                                 "fl": msg.get("Floor"),

@@ -1,5 +1,5 @@
-""" 
-This module contains the EnumDatafeed class which is used for handling datafeed enumerations. 
+"""
+This module contains the EnumDatafeed class which is used for handling datafeed enumerations.
 """
 from .utils import EnumHandler
 
