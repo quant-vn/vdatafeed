@@ -59,15 +59,16 @@ class SSIDatafeedHUB(IDatafeedHUB):
         socket_url = f"{self.url_hub}/connect?{query}"
         return socket_url
 
-    async def listen(self, args, on_message):
+    async def listen(self, args, on_trade_message, on_quote_message):
         """
         Listens for messages from the socket server.
         Args:
             args: The arguments for the listen function.
             on_message: The callback function to handle incoming messages.
         """
+        symbol_list: str = args.split(",")
         arguments: list = []
-        arguments.append(args)
+        arguments.append("X:" + "-".join(symbol_list))
         last_vol: dict = {}
         try:
             socket = SocketListener()
@@ -84,11 +85,23 @@ class SSIDatafeedHUB(IDatafeedHUB):
                             if "A" not in i or not i["A"]:
                                 continue
                             msg = json.loads(json.loads(i["A"][0]).get("Content"))
-                            print(msg)
+                            # print(msg)
                             if msg.get("symbol") not in last_vol:
                                 last_vol[msg.get("symbol")] = msg.get("LastVol")
                             else:
                                 if last_vol[msg.get("symbol")] == msg.get("LastVol"):
+                                    msg = {
+                                        "datetime":  " ".join([msg.get("TradingDate"), msg.get("Time")]),
+                                        "symbol": msg.get("Symbol"),
+                                        "ce": msg.get("Ceiling"),
+                                        "fl": msg.get("Floor"),
+                                        "re": msg.get("RefPrice"),
+                                        "bid_price": [msg.get(f"BidPrice{i}") for i in list(reversed(range(1, 11)))],
+                                        "bid_vol": [msg.get(f"BidVol{i}") for i in list(reversed(range(1, 11)))],
+                                        "ask_price": [msg.get(f"AskPrice{i}") for i in range(1, 11)],
+                                        "ask_vol": [msg.get(f"AskVol{i}") for i in range(1, 11)]
+                                    }
+                                    on_quote_message(msg)
                                     continue
                                 last_vol[msg.get("symbol")] = msg.get("LastVol")
                             msg = {
@@ -102,7 +115,7 @@ class SSIDatafeedHUB(IDatafeedHUB):
                                 "t_vol": msg.get("TotalVol"),
                                 "t_val": msg.get("TotalVal"),
                             }
-                            on_message(msg)
+                            on_trade_message(msg)
                     except Exception as e:
                         print(f" Connection error: {e}")
         except Exception as e:

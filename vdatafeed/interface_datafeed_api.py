@@ -80,9 +80,9 @@ class IDatafeedAPI(ABC):
         Args:
             instrument (str, optional): The instrument to retrieve information for.
                                         Defaults to None.
-            from_date (str, optional): The starting date for retrieving information.
+            from_date (str, optional): The starting date (YYYY-MM-DD) for retrieving information.
                                        Defaults to None.
-            to_date (str, optional): The ending date for retrieving information.
+            to_date (str, optional): The ending date (YYYY-MM-DD) for retrieving information.
                                      Defaults to None.
         Returns:
             dict: A dictionary containing the daily instruments information.
@@ -97,8 +97,8 @@ class IDatafeedAPI(ABC):
         Retrieves daily indices information.
         Args:
             exchange (str, optional): The exchange name. Defaults to None.
-            from_date (str, optional): The starting date. Defaults to None.
-            to_date (str, optional): The ending date. Defaults to None.
+            from_date (str, optional): The starting date (YYYY-MM-DD). Defaults to None.
+            to_date (str, optional): The ending date (YYYY-MM-DD). Defaults to None.
         Returns:
             dict: A dictionary containing the daily indices information.
         """
@@ -130,8 +130,8 @@ class IDatafeedAPI(ABC):
         a specific exchange within a given date range.
         Parameters:
         - exchange (str): The name of the exchange. (optional)
-        - from_date (str): The starting date of the data range. (optional)
-        - to_date (str): The ending date of the data range. (optional)
+        - from_date (str): The starting date (YYYY-MM-DD) of the data range. (optional)
+        - to_date (str): The ending date (YYYY-MM-DD) of the data range. (optional)
         Returns:
         - dict: A dictionary containing the intraday OHLCV data.
         Note:
