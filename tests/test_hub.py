@@ -11,16 +11,33 @@ datafeed = Datafeed(
     )
 )
 
-def on_message(msg):
+
+def on_trade_message(msg):
     """
-    Handle the incoming message.
+    Handle the incoming trade message.
     Args:
         msg (str): The message received.
     Returns:
         None
     """
-    print(msg)
+    print(f"TRADE: {msg}")
 
 
-asyncio.run(datafeed.hub.listen(input("Please select channel: "), on_message))
-print("Listening...")
+def on_quote_message(msg):
+    """
+    Handle the incoming quote message.
+    Args:
+        msg (str): The message received.
+    Returns:
+        None
+    """
+    print(f"QUOTE: {msg}")
+
+
+asyncio.run(
+    datafeed.hub.listen(
+        input("Please select Symbol(SSI)/Index(VNINDEX/VN30) or list(SSI,VCB): "),
+        on_trade_message,
+        on_quote_message
+    )
+)
