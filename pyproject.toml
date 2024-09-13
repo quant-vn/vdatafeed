@@ -1,12 +1,26 @@
 [tool.poetry]
 name = "vdatafeed"
-version = "1.1.0"
+version = "1.1.1"
 license = "MIT"
 description = "vDatafeed: A Python wrapper for Viet Nam Datafeed API"
 repository = "https://github.com/quant-vn/vdatafeed"
 homepage = "https://quant.vn"
 authors = ["thync <thync@outlook.com>"]
 readme = ["README.md", "LICENSE"]
+classifiers = [
+    "Typing :: Typed",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Operating System :: POSIX",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
 
 [tool.poetry.dependencies]
 python = "^3.9"
