@@ -1,9 +1,9 @@
 """ Test the datafeed module. """
 
-from vdatafeed import Datafeed, Config
+from vdatafeed import Datafeed, Config, EnumDatafeed
 
 datafeed = Datafeed(
-    datafeed='ssi',
+    datafeed=EnumDatafeed.SSI.value,
     config=Config(
         ssi_datafeed_id="",
         ssi_datafeed_secret=""

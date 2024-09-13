@@ -17,11 +17,11 @@ pip install vdatafeed
 ### Financial data
 
 ```python
-from vdatafeed import Datafeed, Config
+from vdatafeed import Datafeed, Config, EnumDatafeed
 
 
 datafeed = Datafeed(
-    datafeed='ssi',
+    datafeed=EnumDatafeed.SSI.value,
     config=Config(
         ssi_datafeed_id="<SSI_DATAFEED_ID>",
         ssi_datafeed_secret="<SSI_DATAFEED_SECRET>"
@@ -52,11 +52,11 @@ datafeed.api.get_intraday_ohlcv(instrument="SSI", from_date="2024-09-01", to_dat
 
 ```python
 import asyncio
-from vdatafeed import Datafeed, Config
+from vdatafeed import Datafeed, Config, EnumDatafeed
 
 
 datafeed = Datafeed(
-    datafeed='ssi',
+    datafeed=EnumDatafeed.SSI.value,
     config=Config(
         ssi_datafeed_id="<SSI_DATAFEED_ID>",
         ssi_datafeed_secret="<SSI_DATAFEED_SECRET>"
