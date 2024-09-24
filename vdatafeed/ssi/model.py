@@ -306,7 +306,7 @@ class TradeTick(BaseModel):
     @model_validator(mode='before')
     def set_custom_field(cls, values):
         values['datetime'] = ' '.join([
-            "/".join(reversed(values.get('TradingDate').split("/"))),
+            "-".join(reversed(values.get('TradingDate').split("/"))),
             values.get('Time')
         ])
         return values
@@ -326,7 +326,7 @@ class QuoteTick(BaseModel):
     @model_validator(mode='before')
     def set_custom_field(cls, values):
         values['datetime'] = ' '.join([
-            "/".join(reversed(values.get('TradingDate').split("/"))),
+            "-".join(reversed(values.get('TradingDate').split("/"))),
             values.get('Time')
         ])
         _l = range(1, 11)
