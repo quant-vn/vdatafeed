@@ -3,6 +3,7 @@ import json
 from urllib.parse import urlencode
 
 from .constant import HUB_URL, HUB
+from .model import TradeTick, QuoteTick
 from ..interface_datafeed_hub import IDatafeedHUB
 from ..utils import SocketListener, request_handler
 
@@ -85,41 +86,14 @@ class SSIDatafeedHUB(IDatafeedHUB):
                             if "A" not in i or not i["A"]:
                                 continue
                             msg = json.loads(json.loads(i["A"][0]).get("Content"))
-                            # print(msg)
                             if msg.get("symbol") not in last_vol:
                                 last_vol[msg.get("symbol")] = msg.get("LastVol")
                             else:
                                 if last_vol[msg.get("symbol")] == msg.get("LastVol"):
-                                    _l = range(1, 11)
-                                    _rev_l = list(reversed(_l))
-                                    msg = {
-                                        "datetime": " ".join([
-                                            msg.get("TradingDate"), msg.get("Time")
-                                        ]),
-                                        "symbol": msg.get("Symbol"),
-                                        "ce": msg.get("Ceiling"),
-                                        "fl": msg.get("Floor"),
-                                        "re": msg.get("RefPrice"),
-                                        "bid_price": [msg.get(f"BidPrice{i}") for i in _rev_l],
-                                        "bid_vol": [msg.get(f"BidVol{i}") for i in _rev_l],
-                                        "ask_price": [msg.get(f"AskPrice{i}") for i in _l],
-                                        "ask_vol": [msg.get(f"AskVol{i}") for i in _l]
-                                    }
-                                    on_quote_message(msg)
+                                    on_quote_message(QuoteTick(**msg))
                                     continue
                                 last_vol[msg.get("symbol")] = msg.get("LastVol")
-                            msg = {
-                                "datetime": " ".join([msg.get("TradingDate"), msg.get("Time")]),
-                                "symbol": msg.get("Symbol"),
-                                "ce": msg.get("Ceiling"),
-                                "fl": msg.get("Floor"),
-                                "re": msg.get("RefPrice"),
-                                "price": msg.get("LastPrice"),
-                                "vol": msg.get("LastVol"),
-                                "t_vol": msg.get("TotalVol"),
-                                "t_val": msg.get("TotalVal"),
-                            }
-                            on_trade_message(msg)
+                            on_trade_message(TradeTick(**msg))
                     except Exception as e:
                         print(f" Connection error: {e}")
         except Exception as e:

@@ -1,4 +1,4 @@
-from pydantic import BaseModel as BM, ConfigDict, Field, AliasChoices  # noqa: F401
+from pydantic import BaseModel as BM, ConfigDict, Field, AliasChoices, model_validator  # noqa: F401
 
 
 class BaseModel(BM):

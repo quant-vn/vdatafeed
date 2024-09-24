@@ -1,6 +1,6 @@
 """ Model for SSI datafeed """
 from typing import Optional
-from ..utils import BaseModel, Field, AliasChoices
+from ..utils import BaseModel, Field, AliasChoices, model_validator
 
 
 class SecuritiesInfo(BaseModel):
@@ -290,3 +290,49 @@ class IntradayOHLC(BaseModel):
     close: Optional[str] = Field(validation_alias=AliasChoices('close', 'Close'))
     vol: Optional[str] = Field(validation_alias=AliasChoices('vol', 'Volume'))
     val: Optional[str] = Field(validation_alias=AliasChoices('val', 'Value'))
+
+
+class TradeTick(BaseModel):
+    datetime: Optional[str] = None
+    symbol: Optional[str] = Field(validation_alias=AliasChoices('symbol', 'Symbol'))
+    ceiling: Optional[float] = Field(validation_alias=AliasChoices('ceiling', 'Ceiling'))
+    floor: Optional[float] = Field(validation_alias=AliasChoices('floor', 'Floor'))
+    ref_price: Optional[float] = Field(validation_alias=AliasChoices('ref_price', 'RefPrice'))
+    price: Optional[float] = Field(validation_alias=AliasChoices('price', 'LastPrice'))
+    vol: Optional[float] = Field(validation_alias=AliasChoices('vol', 'LastVol'))
+    total_vol: Optional[float] = Field(validation_alias=AliasChoices('total_vol', 'TotalVol'))
+    total_val: Optional[float] = Field(validation_alias=AliasChoices('total_val', 'TotalVal'))
+
+    @model_validator(mode='before')
+    def set_custom_field(cls, values):
+        values['datetime'] = ' '.join([
+            "/".join(reversed(values.get('TradingDate').split("/"))),
+            values.get('Time')
+        ])
+        return values
+
+
+class QuoteTick(BaseModel):
+    datetime: Optional[str] = None
+    symbol: Optional[str] = Field(validation_alias=AliasChoices('symbol', 'Symbol'))
+    ceiling: Optional[float] = Field(validation_alias=AliasChoices('ceiling', 'Ceiling'))
+    floor: Optional[float] = Field(validation_alias=AliasChoices('floor', 'Floor'))
+    ref_price: Optional[float] = Field(validation_alias=AliasChoices('ref_price', 'RefPrice'))
+    bid_price: Optional[list] = []
+    bid_vol: Optional[list] = []
+    ask_price: Optional[list] = []
+    ask_vol: Optional[list] = []
+
+    @model_validator(mode='before')
+    def set_custom_field(cls, values):
+        values['datetime'] = ' '.join([
+            "/".join(reversed(values.get('TradingDate').split("/"))),
+            values.get('Time')
+        ])
+        _l = range(1, 11)
+        _rev_l = list(reversed(_l))
+        values['bid_price'] = [values.get(f"BidPrice{i}") for i in _rev_l]
+        values['bid_vol'] = [values.get(f"BidVol{i}") for i in _rev_l],
+        values['ask_price'] = [values.get(f"AskPrice{i}") for i in _l],
+        values['ask_vol'] = [values.get(f"AskVol{i}") for i in _l]
+        return values
