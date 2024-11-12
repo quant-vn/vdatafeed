@@ -1,4 +1,5 @@
 """ SSI Datafeed API """
+import os
 from datetime import datetime
 
 from ..interface_datafeed_api import IDatafeedAPI
@@ -70,6 +71,7 @@ class SSIDatafeedAPI(IDatafeedAPI):
             "Accept": "application/json"
         }
         self.__token: str = None
+        self.__session_file: str = "vdatafeed.session"
         self.wait: int = 1  # wait 1 second before sending request
         self.exchange: list = ["HOSE", "HNX", "UPCOM"]
 
@@ -79,6 +81,10 @@ class SSIDatafeedAPI(IDatafeedAPI):
         Returns:
             str: The access token.
         """
+        if os.path.exists(self.__session_file):
+            with open(self.__session_file, "r") as file:
+                self.__token = file.read().strip()
+
         if jwt_handler.is_expired(bearer_token=self.__token):
             data: dict = {}
             data.update(
@@ -90,8 +96,12 @@ class SSIDatafeedAPI(IDatafeedAPI):
             )
             if res.get("status") == 200:
                 access_token = " ".join(["Bearer", res.get("data").get("accessToken")])
+                print(access_token)
+                with open(self.__session_file, "w") as file:
+                    file.write(access_token)
             else:
                 access_token = None
+                print(f"[vDatafeed] Failed to get access token.: {res}")
             self.__token = access_token
         return self.__token
 
