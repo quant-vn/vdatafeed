@@ -1,11 +1,12 @@
 """ HUB datafeed for SSI """
 import json
+import asyncio
 from urllib.parse import urlencode
 
 from .constant import HUB_URL, HUB
 from .model import TradeTick, QuoteTick
 from ..interface_datafeed_hub import IDatafeedHUB
-from ..utils import SocketListener, request_handler
+from ..utils import SocketListener, request_handler, keepalive
 
 
 class SSIDatafeedHUB(IDatafeedHUB):
@@ -74,6 +75,7 @@ class SSIDatafeedHUB(IDatafeedHUB):
         try:
             socket = SocketListener()
             async with socket.connect_socket_server(self.stream_url, self.headers) as websocket:
+                keepalive_task = asyncio.create_task(keepalive(websocket))
                 self.message_send_to_socket.update({"A": arguments})
                 await websocket.send(json.dumps(self.message_send_to_socket))
                 print(f"Subscribed to {self.message_send_to_socket}")
@@ -96,5 +98,7 @@ class SSIDatafeedHUB(IDatafeedHUB):
                             on_trade_message(TradeTick(**msg))
                     except Exception as e:
                         print(f" Connection error: {e}")
+                    finally:
+                        keepalive_task.cancel()
         except Exception as e:
             print(f" Connection error: {e}")
