@@ -97,8 +97,8 @@ class SSIDatafeedHUB(IDatafeedHUB):
                                 last_vol[msg.get("symbol")] = msg.get("TotalVol")
                             on_trade_message(TradeTick(**msg))
                     except Exception as e:
-                        print(f" Connection error: {e}")
+                        print(f"[vDatafeed] Connection error: {e}")
                     finally:
                         keepalive_task.cancel()
         except Exception as e:
-            print(f" Connection error: {e}")
+            print(f"[vDatafeed] Connection error: {e}")
