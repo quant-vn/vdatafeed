@@ -89,12 +89,12 @@ class SSIDatafeedHUB(IDatafeedHUB):
                                 continue
                             msg = json.loads(json.loads(i["A"][0]).get("Content"))
                             if msg.get("symbol") not in last_vol:
-                                last_vol[msg.get("symbol")] = msg.get("LastVol")
+                                last_vol[msg.get("symbol")] = msg.get("TotalVol")
                             else:
-                                if last_vol[msg.get("symbol")] == msg.get("LastVol"):
+                                if last_vol[msg.get("symbol")] == msg.get("TotalVol"):
                                     on_quote_message(QuoteTick(**msg))
                                     continue
-                                last_vol[msg.get("symbol")] = msg.get("LastVol")
+                                last_vol[msg.get("symbol")] = msg.get("TotalVol")
                             on_trade_message(TradeTick(**msg))
                     except Exception as e:
                         print(f" Connection error: {e}")
