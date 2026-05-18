@@ -1,16 +1,17 @@
-""" This module defines the interface for a datafeed HUB. """
+""" Base class for Datafeed HUB (streaming) providers. """
 from abc import ABC, abstractmethod
 
 
-class IDatafeedHUB(ABC):
+class BaseDatafeedHUB(ABC):
     """
-    Interface for a datafeed HUB.
-    This interface defines the methods and properties that a datafeed HUB should implement.
+    Abstract base class for a datafeed HUB (streaming).
+
+    All provider HUB implementations must subclass this and implement
+    the abstract methods below.
+
     Attributes:
-        api (object): The API object used by the datafeed HUB.
+        api: The API object used by the datafeed HUB.
         token (str): The token used for authentication.
-    Methods:
-        listen(args): Abstract method for listening to datafeed events.
     """
     def __init__(self, api):
         self.api = api
