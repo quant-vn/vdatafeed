@@ -1,4 +1,4 @@
-""" Constant for SSI datafeed """
+""" Constants for SSI datafeed. """
 API_URL = "https://fc-data.ssi.com.vn"
 ENDPOINT_AUTH = "api/v2/Market/AccessToken"
 ENDPOINT_SECURITIES = "api/v2/Market/Securities"

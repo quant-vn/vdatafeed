@@ -1,13 +1,12 @@
-""" SSI Datafeed API """
+""" SSI Datafeed API. """
 import os
 from datetime import datetime
 
-from ..interface_datafeed_api import IDatafeedAPI
+from ..._base.api import BaseDatafeedAPI
+from .config import SSIConfig
+from ...utils import jwt_handler, request_handler, session_handler, logger, log_execution_time
 
-from ..config import Config
-from ..utils import jwt_handler, request_handler
-
-from .constant import (
+from .constants import (
     API_URL,
     ENDPOINT_AUTH,
     ENDPOINT_SECURITIES,
@@ -19,43 +18,25 @@ from .constant import (
     ENDPOINT_INDEX_COMPONENT,
     ENDPOINT_INDEX_LIST
 )
-from .model import (
+from .models import (
     SecuritiesInfo,
     IndexInfo,
     InstrumentInfo,
     IndicesInfo,
     EndOfDayOHLC,
-    IntradayOHLC
+    IntradayOHLC,
+    IndexComponentInfo
 )
 
 
-class SSIDatafeedAPI(IDatafeedAPI):
+class SSIDatafeedAPI(BaseDatafeedAPI):
     """
-    This class represents the API for accessing data from the SSIDatafeed service.
+    API implementation for the SSI datafeed provider.
+
     Args:
-        config (Config): The configuration object for the datafeed.
-    Attributes:
-        url_auth (str): The URL for authentication.
-        url_securities (str): The URL for retrieving securities information.
-        url_securities_detail (str): The URL for retrieving detailed securities information.
-        url_intraday_ohlc (str): The URL for retrieving intraday OHLC data.
-        url_endofday_ohlc (str): The URL for retrieving end-of-day OHLC data.
-        url_index_list (str): The URL for retrieving the list of indices.
-        url_index_component (str): The URL for retrieving the components of an index.
-        url_daily_stock_price (str): The URL for retrieving daily stock price data.
-        __headers (dict): The headers for the API requests.
-        __token (str): The access token for authentication.
-        wait (int): The wait time in seconds before sending a request.
-        exchange (list): The list of exchanges.
-    Methods:
-        get_token: Retrieves the access token for authentication.
-        get_instruments: Retrieves the list of instruments.
-        get_instrument_details: Retrieves the details of a specific instrument.
-        get_indices: Retrieves the list of indices.
-        get_indices_instruments: Retrieves the list of instruments for a specific index.
-        get_daily_instruments_info: Retrieves the daily information for a specific instrument.
+        config (SSIConfig): The SSI-specific configuration.
     """
-    def __init__(self, config: Config):
+    def __init__(self, config: SSIConfig):
         super().__init__(config)
         self.url_auth: str = "/".join([API_URL, ENDPOINT_AUTH])
         self.url_securities: str = "/".join([API_URL, ENDPOINT_SECURITIES])
@@ -71,7 +52,6 @@ class SSIDatafeedAPI(IDatafeedAPI):
             "Accept": "application/json"
         }
         self.__token: str = None
-        self.__session_file: str = "vdatafeed.session"
         self.wait: int = 1  # wait 1 second before sending request
         self.exchange: list = ["HOSE", "HNX", "UPCOM"]
 
@@ -81,38 +61,55 @@ class SSIDatafeedAPI(IDatafeedAPI):
         Returns:
             str: The access token.
         """
-        if os.path.exists(self.__session_file):
-            with open(self.__session_file, "r") as file:
-                self.__token = file.read().strip()
+        account_key = self.config.consumer_id
+        if not self.__token:
+            sess = session_handler.get_session("ssi", account_key)
+            self.__token = sess.get("token")
 
         if jwt_handler.is_expired(bearer_token=self.__token):
             data: dict = {}
             data.update(
-                consumerID=self.config.ssi_datafeed_id,
-                consumerSecret=self.config.ssi_datafeed_secret
+                consumerID=self.config.consumer_id,
+                consumerSecret=self.config.consumer_secret
             )
             res = request_handler.post(
                 url=self.url_auth, headers=self.__headers, data=data, limit=self.wait
             )
             if res.get("status") == 200:
                 access_token = " ".join(["Bearer", res.get("data").get("accessToken")])
-                print(access_token)
-                with open(self.__session_file, "w") as file:
-                    file.write(access_token)
+                logger.info(f"Access Token: {access_token}")
+                session_handler.save_session(
+                    provider="ssi",
+                    account_key=account_key,
+                    token=access_token,
+                    auth_response=res
+                )
             else:
                 access_token = None
-                print(f"[vDatafeed] Failed to get access token.: {res}")
+                logger.error(f"Failed to get access token: {res}")
             self.__token = access_token
         return self.__token
 
+    def import_session(self, auth_response: dict):
+        """
+        Directly import a raw auth response dictionary, extracting the accessToken,
+        and saving the entire response data to the active multi-account session file.
+        """
+        if not auth_response or not auth_response.get("data"):
+            raise ValueError("Invalid auth response: missing 'data' field")
+        
+        access_token = " ".join(["Bearer", auth_response.get("data").get("accessToken")])
+        self.__token = access_token
+        session_handler.save_session(
+            provider="ssi",
+            account_key=self.config.consumer_id,
+            token=access_token,
+            auth_response=auth_response
+        )
+        logger.info(f"Successfully imported auth response for account: {self.config.consumer_id}")
+
+    @log_execution_time
     def get_instruments(self, exchange: str = None) -> dict:
-        """
-        Retrieves the list of instruments.
-        Args:
-            exchange (str, optional): The exchange to filter the instruments. Defaults to None.
-        Returns:
-            dict: The list of instruments.
-        """
         exchange = [exchange] or self.exchange
         self.__headers.update({"Authorization": self.get_token()})
         data: list = []
@@ -136,14 +133,8 @@ class SSIDatafeedAPI(IDatafeedAPI):
                     break
         return [SecuritiesInfo(**i) for i in data]
 
+    @log_execution_time
     def get_instrument_details(self, instrument: str = None) -> dict:
-        """
-        Retrieves the details of a specific instrument.
-        Args:
-            instrument (str, optional): The instrument symbol. Defaults to None.
-        Returns:
-            dict: The details of the instrument.
-        """
         self.__headers.update({"Authorization": self.get_token()})
         params: dict = {
             "Symbol": instrument
@@ -155,15 +146,8 @@ class SSIDatafeedAPI(IDatafeedAPI):
             return SecuritiesInfo(**res.get("data")[0].get("RepeatedInfo")[0])
         return None
 
+    @log_execution_time
     def get_indices(self, exchange: str = None) -> list:
-        """
-        Retrieves the list of indices.
-        Args:
-            exchange (str, optional): The exchange to filter the indices. Defaults to None.
-        Returns:
-            dict: The list of indices.
-        """
-        # ENDPOINT_INDEX
         self.__headers.update({"Authorization": self.get_token()})
         exchange = [exchange] or self.exchange
         list_index: list = []
@@ -180,16 +164,9 @@ class SSIDatafeedAPI(IDatafeedAPI):
                 list_index += res.get("data")
         return [IndexInfo(**i) for i in list_index] or None
 
-    def get_indices_instruments(self, index: str = None) -> list:
-        """
-        Retrieves the list of instruments for a specific index.
-        Args:
-            index (str, optional): The index code. Defaults to None.
-        Returns:
-            dict: The list of instruments.
-        """
+    @log_execution_time
+    def get_indices_instruments(self, index: str = None) -> IndexComponentInfo:
         self.__headers.update({"Authorization": self.get_token()})
-        instruments: list = []
         params: dict = {
             "indexCode": index,
             "pageIndex": 1,
@@ -199,22 +176,45 @@ class SSIDatafeedAPI(IDatafeedAPI):
             url=self.url_index_component, headers=self.__headers, params=params, limit=self.wait
         )
         if res.get("data"):
-            instruments = [i.get("Isin") for i in res.get("data")[0].get("IndexComponent")]
-            return instruments
+            return IndexComponentInfo(**res.get("data")[0])
         return None
 
+    @log_execution_time
+    def get_daily_instrument_info(
+        self, instrument: str, from_date: str = None, to_date: str = None
+    ) -> list:
+        if from_date:
+            from_date = datetime.strptime(from_date, "%Y-%m-%d").strftime("%d/%m/%Y")
+        if to_date:
+            to_date = datetime.strptime(to_date, "%Y-%m-%d").strftime("%d/%m/%Y")
+        self.__headers.update({"Authorization": self.get_token()})
+        params: dict = {
+            "symbol": instrument,
+            "fromDate": from_date,
+            "toDate": to_date,
+            "pageSize": 1000,
+            "pageIndex": 1
+        }
+        data: list = []
+        total_element: int = 0
+        while True:
+            logger.info(f"Querying daily stock price for {instrument} with params: {params}")
+            res = request_handler.get(
+                url=self.url_daily_stock_price, headers=self.__headers,
+                params=params, limit=self.wait
+            )
+            if res.get("data"):
+                data += res.get("data")
+                total_element += len(res.get("data"))
+            params.update(pageIndex=params.get("pageIndex") + 1)
+            if total_element == res.get("totalRecord"):
+                break
+        return [InstrumentInfo(**i) for i in data] or None
+
+    @log_execution_time
     def get_daily_instruments_info(
-        self, instrument: str = None, from_date: str = None, to_date: str = None
-    ) -> dict:
-        """
-        Retrieves the daily information for a specific instrument.
-        Args:
-            instrument (str, optional): The instrument symbol. Defaults to None.
-            from_date (str, optional): The start date. Defaults to None.
-            to_date (str, optional): The end date. Defaults to None.
-        Returns:
-            dict: The daily information.
-        """
+        self, from_date: str = None, to_date: str = None
+    ) -> list:
         if from_date:
             from_date = datetime.strptime(from_date, "%Y-%m-%d").strftime("%d/%m/%Y")
         if to_date:
@@ -227,11 +227,14 @@ class SSIDatafeedAPI(IDatafeedAPI):
             "pageIndex": 1
         }
         data: list = []
-        if instrument:
+        for exc in self.exchange:
             total_element: int = 0
-            params.update(symbol=instrument)
+            params.update(
+                pageIndex=1,
+                market=exc
+            )
             while True:
-                print(params)
+                logger.info(f"Querying daily stock price for market {exc} with params: {params}")
                 res = request_handler.get(
                     url=self.url_daily_stock_price, headers=self.__headers,
                     params=params, limit=self.wait
@@ -242,39 +245,12 @@ class SSIDatafeedAPI(IDatafeedAPI):
                 params.update(pageIndex=params.get("pageIndex") + 1)
                 if total_element == res.get("totalRecord"):
                     break
-        else:
-            for exchange in self.exchange:
-                total_element: int = 0
-                params.update(
-                    pageIndex=1,
-                    market=exchange
-                )
-                while True:
-                    print(params)
-                    res = request_handler.get(
-                        url=self.url_daily_stock_price, headers=self.__headers,
-                        params=params, limit=self.wait
-                    )
-                    if res.get("data"):
-                        data += res.get("data")
-                        total_element += len(res.get("data"))
-                    params.update(pageIndex=params.get("pageIndex") + 1)
-                    if total_element == res.get("totalRecord"):
-                        break
         return [InstrumentInfo(**i) for i in data] or None
 
+    @log_execution_time
     def get_daily_indices_info(
         self, index: str, from_date: str = None, to_date: str = None
     ) -> list:
-        """
-        Retrieves the daily information for a specific index.
-        Args:
-            exchange (str, optional): The exchange name. Defaults to None.
-            from_date (str, optional): The start date. Defaults to None.
-            to_date (str, optional): The end date. Defaults to None.
-        Returns:
-            dict: The daily information.
-        """
         if from_date:
             from_date = datetime.strptime(from_date, "%Y-%m-%d").strftime("%d/%m/%Y")
         if to_date:
@@ -302,18 +278,10 @@ class SSIDatafeedAPI(IDatafeedAPI):
                 break
         return [IndicesInfo(**i) for i in data] or None
 
+    @log_execution_time
     def get_endofday_ohlcv(
         self, instrument: str = None, from_date: str = None, to_date: str = None
     ) -> list:
-        """
-        Retrieves the end-of-day OHLC data.
-        Args:
-            instrument (str, optional): The instrument symbol. Defaults to None.
-            from_date (str, optional): The start date. Defaults to None.
-            to_date (str, optional): The end date. Defaults to None.
-        Returns:
-            dict: The end-of-day OHLC data.
-        """
         if from_date:
             from_date = datetime.strptime(from_date, "%Y-%m-%d").strftime("%d/%m/%Y")
         if to_date:
@@ -334,18 +302,10 @@ class SSIDatafeedAPI(IDatafeedAPI):
             data = res.get("data")
         return [EndOfDayOHLC(**i) for i in data] or None
 
+    @log_execution_time
     def get_intraday_ohlcv(
         self, instrument: str = None, from_date: str = None, to_date: str = None
     ) -> list:
-        """
-        Retrieves the intraday OHLC data.
-        Args:
-            exchange (str, optional): The exchange name. Defaults to None.
-            from_date (str, optional): The start date. Defaults to None.
-            to_date (str, optional): The end date. Defaults to None.
-        Returns:
-            dict: The intraday OHLC data.
-        """
         if from_date:
             from_date = datetime.strptime(from_date, "%Y-%m-%d").strftime("%d/%m/%Y")
         if to_date:

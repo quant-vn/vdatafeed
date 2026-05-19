@@ -1,4 +1,5 @@
 """ This module is responsible for handling the socket connection to the server. """
+import inspect
 import websockets
 
 
@@ -24,4 +25,7 @@ class SocketListener:
         websockets.WebSocketClientProtocol
             The WebSocket client protocol object representing the connection.
         """
+        sig = inspect.signature(websockets.connect)
+        if "additional_headers" in sig.parameters:
+            return websockets.connect(url, additional_headers=headers)
         return websockets.connect(url, extra_headers=headers)

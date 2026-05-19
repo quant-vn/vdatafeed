@@ -1,16 +1,16 @@
-""" HUB datafeed for SSI with Reconnection """
+""" HUB datafeed for SSI with Reconnection. """
 import json
 import asyncio
 import random
 from urllib.parse import urlencode
 
-from .constant import HUB_URL, HUB
-from .model import TradeTick, QuoteTick
-from ..interface_datafeed_hub import IDatafeedHUB
-from ..utils import SocketListener, request_handler
+from .constants import HUB_URL, HUB
+from .models import TradeTick, QuoteTick
+from ..._base.hub import BaseDatafeedHUB
+from ...utils import SocketListener, request_handler, logger
 
 
-class SSIDatafeedHUB(IDatafeedHUB):
+class SSIDatafeedHUB(BaseDatafeedHUB):
     """
     Datafeed HUB implementation for the SSI datafeed with improved reconnection.
     Args:
@@ -97,11 +97,11 @@ class SSIDatafeedHUB(IDatafeedHUB):
                 self.stream_url = self.generate_socket_url()
                 socket = SocketListener()
                 async with socket.connect_socket_server(self.stream_url, self.headers) as websocket:
-                    print(f"[vDatafeed] WebSocket connected (Attempt {attempt + 1})")
+                    logger.info(f"WebSocket connected (Attempt {attempt + 1})")
                     # Prepare and send subscription message
                     self.message_send_to_socket.update({"A": arguments})
                     await websocket.send(json.dumps(self.message_send_to_socket))
-                    print(f"[vDatafeed] Subscribed to {self.message_send_to_socket}")
+                    logger.info(f"Subscribed to {self.message_send_to_socket}")
                     # Create keepalive task
                     async for msg in websocket:
                         try:
@@ -122,15 +122,15 @@ class SSIDatafeedHUB(IDatafeedHUB):
                                 on_trade_message(TradeTick(**msg))
                             attempt = 0
                         except Exception as e:
-                            print(f"[vDatafeed] Message processing error: {e}")
+                            logger.error(f"Message processing error: {e}")
             except Exception as e:
-                print(f"[vDatafeed] Connection error: {e}")
+                logger.error(f"Connection error: {e}")
                 # If this was the last attempt, raise the exception
                 if attempt == self.max_reconnect_attempts - 1:
                     raise
                 # Calculate backoff delay
                 delay = self.calculate_backoff_delay(attempt)
-                print(f"[vDatafeed] Reconnecting in {delay:.2f} seconds...")
+                logger.warning(f"Reconnecting in {delay:.2f} seconds...")
                 # Wait before trying to reconnect
                 await asyncio.sleep(delay)
-        print("[vDatafeed] Maximum reconnection attempts reached")
+        logger.warning("Maximum reconnection attempts reached")
