@@ -14,11 +14,12 @@ pip install vdatafeed
 
 ## Supported Providers
 
-| Provider | Status |
-|----------|--------|
-| SSI      | ✅ Supported |
-| VPS      | 🔜 Coming soon |
-| TCBS     | 🔜 Coming soon |
+| Provider    | Status |
+|-------------|--------|
+| SSI         | ✅ Supported |
+| SSI-v2      | ⚠️ Work in Progress |
+| DNSE        | ⚠️ Work in Progress |
+| DNSE-v2     | ⚠️ Work in Progress |
 
 ## Usage
 
@@ -96,19 +97,3 @@ from vdatafeed import list_providers
 
 print(list_providers())  # ['ssi']
 ```
-
-## Adding a New Provider
-
-To add a new provider (e.g., VPS), create a module under `vdatafeed/providers/vps/`:
-
-```
-vdatafeed/providers/vps/
-├── __init__.py      # register_provider("vps", VPSConfig, VPSDatafeedAPI, VPSDatafeedHUB)
-├── config.py        # VPSConfig(BaseConfig)
-├── api.py           # VPSDatafeedAPI(BaseDatafeedAPI)
-├── hub.py           # VPSDatafeedHUB(BaseDatafeedHUB)
-├── constants.py
-└── models.py
-```
-
-Then import the provider in `vdatafeed/providers/__init__.py` or `vdatafeed/__init__.py`.
